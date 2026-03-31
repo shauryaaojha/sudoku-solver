@@ -28,7 +28,7 @@ html {
 body {
   margin: 0;
   min-width: 320px;
-  font-family: var(--font-sans), sans-serif;
+  font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
   background:
     radial-gradient(circle at top left, rgba(183, 121, 51, 0.12), transparent 26%),
     radial-gradient(circle at top right, rgba(24, 24, 27, 0.04), transparent 22%),
@@ -41,11 +41,11 @@ body {
 code,
 pre,
 .font-mono {
-  font-family: var(--font-mono), monospace;
+  font-family: "Cascadia Code", "Consolas", "Courier New", monospace;
 }
 
 .font-serif {
-  font-family: var(--font-serif), serif;
+  font-family: Georgia, "Times New Roman", serif;
 }
 
 a {
