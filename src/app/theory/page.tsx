@@ -6,6 +6,7 @@ const sections = [
   { id: "model", label: "Problem Model" },
   { id: "isvalid", label: "isValid Check" },
   { id: "algorithm", label: "Algorithm Flow" },
+  { id: "fast-algorithm", label: "Fast Algorithm" },
   { id: "complexity", label: "Complexity" },
   { id: "visualizer", label: "Visualizer Mapping" },
   { id: "limits", label: "Limits and Extensions" },
@@ -42,6 +43,7 @@ export default function TheoryPage() {
                 <TheoryMetric label="Constraint checks" value="Row, column, 3x3 box" />
                 <TheoryMetric label="Empty-cell rule" value="First empty cell found" />
                 <TheoryMetric label="Core decision point" value="isValid(board, row, col, num)" />
+                <TheoryMetric label="Faster mode" value="MRV selection + bitmasks" />
               </dl>
             </div>
           </div>
@@ -263,6 +265,75 @@ export default function TheoryPage() {
               </div>
             </article>
 
+            <article id="fast-algorithm" className="panel-card rounded-[2rem] p-6 sm:p-8">
+              <SectionEyebrow>Fast Algorithm</SectionEyebrow>
+              <h2 className="font-serif mt-3 text-4xl font-semibold tracking-[-0.04em] text-zinc-950">
+                The optimized solver used by the toggle
+              </h2>
+              <p className="mt-5 max-w-3xl text-base leading-8 text-zinc-700">
+                Fast mode still uses recursion and backtracking, but it reduces
+                wasted work in two important ways. Instead of selecting the first
+                empty cell it sees, it selects the empty cell with the fewest
+                legal candidates. This idea is commonly called <strong>minimum remaining values</strong>, or MRV.
+                It also stores row, column, and box occupancy in bitmasks, so
+                candidate checks are much cheaper than rescanning the whole board
+                every time.
+              </p>
+
+              <div className="mt-6 grid gap-4 md:grid-cols-3">
+                <RuleCard
+                  title="MRV cell choice"
+                  text="Among all empty cells, choose the one with the smallest candidate set. That usually causes contradictions earlier and shrinks the search tree."
+                />
+                <RuleCard
+                  title="Bitmask tracking"
+                  text="Each row, column, and 3x3 box stores used digits as bits. Candidate lookup becomes a few bit operations instead of repeated scans."
+                />
+                <RuleCard
+                  title="Same recursive structure"
+                  text="The solver still tries a candidate, recurses, and backtracks on failure. It is faster because it chooses better branches and checks them more cheaply."
+                />
+              </div>
+
+              <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1.1fr)_360px]">
+                <div className="rounded-[1.6rem] border border-zinc-200/80 bg-white/80 p-5">
+                  <p className="text-[0.68rem] font-extrabold uppercase tracking-[0.22em] text-[var(--muted)]">
+                    Fast-mode pseudocode
+                  </p>
+                  <pre className="mt-4 overflow-x-auto rounded-2xl bg-zinc-950 px-4 py-4 text-sm leading-7 text-zinc-200">
+                    <code>{`solveFast(board):
+  cell = chooseEmptyCellWithFewestCandidates(board)
+  if cell == null:
+    return true
+
+  candidates = getCandidatesFromBitmasks(cell)
+  if candidates is empty:
+    return false
+
+  for digit in candidates:
+    place digit
+    if solveFast(board):
+      return true
+    remove digit
+
+  return false`}</code>
+                  </pre>
+                </div>
+
+                <div className="rounded-[1.6rem] border border-zinc-200/80 bg-[var(--background-strong)]/65 p-5">
+                  <p className="text-[0.68rem] font-extrabold uppercase tracking-[0.22em] text-[var(--muted)]">
+                    Why it is faster
+                  </p>
+                  <ul className="mt-4 space-y-4 text-sm leading-7 text-zinc-700">
+                    <li>It attacks the hardest cells first instead of following board order.</li>
+                    <li>It detects impossible branches earlier.</li>
+                    <li>It computes legal digits with mask arithmetic.</li>
+                    <li>It usually explores far fewer recursive states on hard puzzles.</li>
+                  </ul>
+                </div>
+              </div>
+            </article>
+
             <article id="complexity" className="panel-card rounded-[2rem] p-6 sm:p-8">
               <SectionEyebrow>Complexity</SectionEyebrow>
               <h2 className="font-serif mt-3 text-4xl font-semibold tracking-[-0.04em] text-zinc-950">
@@ -287,10 +358,13 @@ export default function TheoryPage() {
                   <p>
                     That bound is intentionally pessimistic. Real puzzles prune
                     many branches early because invalid placements are rejected
-                    before the recursion goes deeper. Even so, this implementation
-                    does not use advanced heuristics such as minimum remaining
-                    values, constraint propagation, or exact-cover reductions, so
-                    difficult boards can still force a large search.
+                    before the recursion goes deeper. The classic mode still
+                    follows a simple first-empty-cell policy, so difficult boards
+                    can force a large search. The fast mode improves practical
+                    performance by combining MRV selection with bitmask-based
+                    candidate checks, which often cuts the explored search space
+                    dramatically even though the worst-case problem is still
+                    exponential.
                   </p>
                   <p>
                     Space complexity is much smaller than the full search tree. A
@@ -306,9 +380,9 @@ export default function TheoryPage() {
                     Correct Takeaways
                   </p>
                   <ul className="mt-4 space-y-4 text-sm leading-7 text-zinc-700">
-                    <li>The project uses plain recursive backtracking.</li>
-                    <li>Constraint checks are local, not heuristic-driven.</li>
-                    <li>Hard puzzles are slow because branch count can explode.</li>
+                    <li>Both modes are recursive backtracking solvers.</li>
+                    <li>Classic mode is simpler and easier to study.</li>
+                    <li>Fast mode uses better branching and cheaper candidate checks.</li>
                     <li>The visualizer adds overhead because it records snapshots.</li>
                   </ul>
                 </div>
@@ -354,8 +428,9 @@ export default function TheoryPage() {
                     candidate value, recursion depth, and explored-state count.
                   </div>
                   <div className="rounded-2xl bg-white/[0.04] p-4 text-sm leading-7 text-zinc-300">
-                    That recorded sequence is why the app can replay the solving
-                    process instead of only jumping from puzzle to answer.
+                    The classic and fast solvers both feed the same visualizer,
+                    so users can compare how algorithm choice changes the number
+                    of recorded states and the shape of the search.
                   </div>
                 </div>
               </div>
@@ -369,20 +444,14 @@ export default function TheoryPage() {
               <div className="mt-6 grid gap-6 lg:grid-cols-2">
                 <div className="space-y-5 text-base leading-8 text-zinc-700">
                   <p>
-                    The current solver is correct and easy to understand, which
-                    makes it a good teaching implementation. But it is not tuned
-                    for maximum speed.
+                    The project now includes both a simple teaching version and a
+                    faster heuristic-guided version. That makes it useful both
+                    for learning and for demonstrating practical optimization.
                   </p>
                   <p>
-                    The largest performance improvement would come from choosing
-                    the next cell more intelligently. For example, selecting the
-                    empty cell with the fewest legal candidates usually shrinks
-                    the search tree much faster than scanning left to right.
-                  </p>
-                  <p>
-                    Additional improvements could include bitmasks for row,
-                    column, and box occupancy, or a constraint-propagation stage
-                    before recursion begins.
+                    There is still room to go further. Stronger propagation,
+                    advanced Sudoku heuristics, or hybrid exact-cover approaches
+                    could reduce search even more on difficult boards.
                   </p>
                 </div>
 
@@ -391,10 +460,10 @@ export default function TheoryPage() {
                     Reasonable Next Upgrades
                   </p>
                   <ul className="mt-4 space-y-3 text-sm leading-7 text-zinc-700">
-                    <li>Choose the most constrained empty cell first.</li>
-                    <li>Track candidates with bitsets instead of rescanning rows.</li>
-                    <li>Separate solver logic from step-recording overhead.</li>
-                    <li>Add optional heuristic annotations to the visualizer.</li>
+                    <li>Constraint propagation before recursion starts.</li>
+                    <li>Naked singles and hidden singles as pre-solving passes.</li>
+                    <li>Separate high-speed solving from visual step capture.</li>
+                    <li>Live comparison stats between classic and fast modes.</li>
                   </ul>
                 </div>
               </div>

@@ -5,6 +5,7 @@ import SudokuGrid from "@/components/SudokuGrid";
 import {
   Board,
   SolveStep,
+  SolverMode,
   solveSudokuWithSteps,
   PRESETS,
   countEmpty,
@@ -22,6 +23,7 @@ const presetOptions = [
 export default function VisualizerPage() {
   const [baseBoard, setBaseBoard] = useState<Board>(PRESETS.easy.map((r) => [...r]));
   const [selectedPreset, setSelectedPreset] = useState("Easy");
+  const [solverMode, setSolverMode] = useState<SolverMode>("classic");
   const [givenCells, setGivenCells] = useState<boolean[][]>(
     PRESETS.easy.map((r) => r.map((c) => c !== 0))
   );
@@ -85,7 +87,8 @@ export default function VisualizerPage() {
 
   const handleSolve = () => {
     const generatedSteps = solveSudokuWithSteps(
-      originalBoard.current.map((r) => [...r])
+      originalBoard.current.map((r) => [...r]),
+      solverMode
     );
 
     setSteps(generatedSteps);
@@ -100,7 +103,8 @@ export default function VisualizerPage() {
   const handleStepThrough = () => {
     if (steps.length === 0) {
       const generatedSteps = solveSudokuWithSteps(
-        originalBoard.current.map((r) => [...r])
+        originalBoard.current.map((r) => [...r]),
+        solverMode
       );
       setSteps(generatedSteps);
       setCurrentStep(0);
@@ -132,12 +136,12 @@ export default function VisualizerPage() {
   const getStatusText = () => {
     if (isSolved) return "Solved. All row, column, and box constraints hold.";
     if (isPlaying) {
-      return `Running recursive backtracking at depth ${recursionDepth} across ${statesExplored} explored states.`;
+      return `Running ${solverMode === "fast" ? "the faster MRV solver" : "classic backtracking"} at depth ${recursionDepth} across ${statesExplored} explored states.`;
     }
     if (steps.length > 0 && currentStep >= 0) {
       return `Paused on step ${currentStep + 1} of ${steps.length}. Resume, step, or reset from this point.`;
     }
-    return `Ready to execute. ${emptyCells} empty cells remain in the selected puzzle.`;
+    return `Ready to execute in ${solverMode === "fast" ? "fast" : "classic"} mode. ${emptyCells} empty cells remain in the selected puzzle.`;
   };
 
   const getLogTone = (type: string) => {
@@ -178,8 +182,13 @@ export default function VisualizerPage() {
               </p>
             </div>
 
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
               <MetricCard label="Preset" value={selectedPreset} helper={`${emptyCells} empty`} />
+              <MetricCard
+                label="Mode"
+                value={solverMode === "fast" ? "Fast" : "Classic"}
+                helper={solverMode === "fast" ? "MRV + bitmasks" : "basic DFS"}
+              />
               <MetricCard label="Progress" value={progressLabel} helper="recorded steps" />
               <MetricCard
                 label="States"
@@ -199,6 +208,37 @@ export default function VisualizerPage() {
           <aside className="xl:sticky xl:top-28 xl:self-start">
             <div className="panel-card rounded-[2rem] p-6">
               <div className="flex flex-col gap-8">
+                <div>
+                  <SectionLabel label="Algorithm" />
+                  <div className="mt-4 rounded-2xl border border-zinc-200/80 bg-white/70 p-3">
+                    <div className="grid grid-cols-2 gap-2">
+                      <ModeButton
+                        label="Classic"
+                        description="First empty cell"
+                        active={solverMode === "classic"}
+                        onClick={() => {
+                          setSolverMode("classic");
+                          handleReset();
+                        }}
+                      />
+                      <ModeButton
+                        label="Fast"
+                        description="MRV + bitmasks"
+                        active={solverMode === "fast"}
+                        onClick={() => {
+                          setSolverMode("fast");
+                          handleReset();
+                        }}
+                      />
+                    </div>
+                    <p className="mt-3 text-xs leading-5 text-[var(--muted)]">
+                      {solverMode === "fast"
+                        ? "Fast mode chooses the most constrained empty cell first and tracks row, column, and box occupancy with bitmasks."
+                        : "Classic mode scans the board left to right and is easier to study as a plain recursive backtracking solver."}
+                    </p>
+                  </div>
+                </div>
+
                 <div>
                   <SectionLabel label="Presets" />
                   <div className="mt-4 grid gap-3">
@@ -488,6 +528,34 @@ function ActionButton({
     >
       <span>{label}</span>
       <span className="material-symbols-outlined text-[1.1rem]">{icon}</span>
+    </button>
+  );
+}
+
+function ModeButton({
+  label,
+  description,
+  active,
+  onClick,
+}: {
+  label: string;
+  description: string;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`rounded-2xl border px-3 py-3 text-left transition ${
+        active
+          ? "border-zinc-950 bg-zinc-950 text-white"
+          : "border-zinc-200/80 bg-white/80 text-zinc-900 hover:bg-white"
+      }`}
+    >
+      <div className="text-sm font-bold">{label}</div>
+      <div className={`mt-1 text-[11px] ${active ? "text-zinc-300" : "text-[var(--muted)]"}`}>
+        {description}
+      </div>
     </button>
   );
 }

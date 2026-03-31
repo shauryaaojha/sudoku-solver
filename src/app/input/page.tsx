@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import {
   Board,
   PRESETS,
+  SolverMode,
   solveSudoku,
   validateBoard,
   countEmpty,
@@ -15,6 +16,7 @@ export default function ManualInputPage() {
   const [board, setBoard] = useState<Board>(
     Array.from({ length: 9 }, () => Array(9).fill(0))
   );
+  const [solverMode, setSolverMode] = useState<SolverMode>("classic");
   const [error, setError] = useState<string | null>(null);
   const [solvedBoard, setSolvedBoard] = useState<Board | null>(null);
 
@@ -43,7 +45,7 @@ export default function ManualInputPage() {
       return;
     }
 
-    const solution = solveSudoku(boardCopy);
+    const solution = solveSudoku(boardCopy, solverMode);
     if (solution) {
       setSolvedBoard(solution);
       setError(null);
@@ -146,12 +148,47 @@ export default function ManualInputPage() {
         )}
 
         {/* Action Buttons */}
+        <div className="rounded-2xl border border-zinc-200 bg-white p-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-widest text-zinc-400">
+                Algorithm Mode
+              </p>
+              <p className="mt-1 text-sm text-zinc-500">
+                Switch between the basic recursive solver and the faster MRV-based solver.
+              </p>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                onClick={() => setSolverMode("classic")}
+                className={`rounded-xl px-4 py-3 text-sm font-semibold transition ${
+                  solverMode === "classic"
+                    ? "bg-zinc-900 text-white"
+                    : "border border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50"
+                }`}
+              >
+                Classic
+              </button>
+              <button
+                onClick={() => setSolverMode("fast")}
+                className={`rounded-xl px-4 py-3 text-sm font-semibold transition ${
+                  solverMode === "fast"
+                    ? "bg-zinc-900 text-white"
+                    : "border border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50"
+                }`}
+              >
+                Fast
+              </button>
+            </div>
+          </div>
+        </div>
+
         <div className="flex flex-wrap gap-4 pt-4">
           <button
             onClick={handleSolve}
             className="px-6 py-3 rounded-xl font-semibold text-sm transition-all shadow-sm bg-zinc-900 text-white hover:bg-zinc-800 hover:shadow-md"
           >
-            Solve System
+            Solve ({solverMode === "fast" ? "Fast" : "Classic"})
           </button>
           <button
             onClick={handleClear}
