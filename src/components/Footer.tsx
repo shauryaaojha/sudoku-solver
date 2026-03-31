@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 
 export default function Footer() {
@@ -6,7 +7,15 @@ export default function Footer() {
       <div className="shell-container">
         <div className="site-footer-panel">
           <div className="site-footer-brand">
-            <span className="site-footer-kicker">Sudoku Solver</span>
+            <div className="site-footer-logo-wrap">
+              <Image
+                src="/logo.png"
+                alt="Sudoku Solver"
+                width={497}
+                height={128}
+                className="site-footer-logo"
+              />
+            </div>
             <p className="site-footer-copy">
               Visualize how Sudoku is solved using recursion and backtracking,
               then study the exact logic behind each step.

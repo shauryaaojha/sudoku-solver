@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -17,10 +18,14 @@ export default function Navbar() {
       <div className="shell-container">
         <nav className="site-nav">
           <Link href="/" className="site-brand" aria-label="Sudoku Solver home">
-            <span className="site-brand-mark">SS</span>
-            <span>
-              <span className="site-brand-title">Sudoku Solver</span>
-            </span>
+            <Image
+              src="/logo.png"
+              alt="Sudoku Solver"
+              width={497}
+              height={128}
+              priority
+              className="site-brand-logo"
+            />
           </Link>
 
           <div className="site-nav-links" aria-label="Primary navigation">
