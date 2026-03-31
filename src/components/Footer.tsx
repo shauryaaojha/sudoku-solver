@@ -15,6 +15,10 @@ export default function Footer() {
                 height={128}
                 className="site-footer-logo"
               />
+              <div className="site-footer-brand-text">
+                <span className="site-footer-kicker">SUDOKU</span>
+                <span className="site-footer-heading">SOLVER</span>
+              </div>
             </div>
             <p className="site-footer-copy">
               Visualize how Sudoku is solved using recursion and backtracking,

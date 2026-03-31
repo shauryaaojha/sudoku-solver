@@ -26,6 +26,10 @@ export default function Navbar() {
               priority
               className="site-brand-logo"
             />
+            <span className="site-brand-text">
+              <span className="site-brand-title">SUDOKU</span>
+              <span className="site-brand-caption">SOLVER</span>
+            </span>
           </Link>
 
           <div className="site-nav-links" aria-label="Primary navigation">
